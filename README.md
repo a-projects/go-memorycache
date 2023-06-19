@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"time"
 
-	memorycache "github.com/a-projects/go-memorycache"
+	"github.com/a-projects/go-memorycache"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		// лимит записей в кэше, после которого начинает работать вытеснение
 		LimitEntries: 65_536,
 		// файл для восстановления кэша при перезапуске приложения
-		DataStore: "cache.bin"
+		DataStore: "cache.bin",
 	})
 
 	// пробуем получить значение записи по ключу "foo"
