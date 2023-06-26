@@ -2,10 +2,10 @@ package memorycache
 
 import "time"
 
-// MemoryCacheEntryOptions параметры записи
+// MemoryCacheEntryOptions
 type MemoryCacheEntryOptions struct {
-	// Expiration время жизни записи
+	// Expiration entry lifetime
 	Expiration time.Time
-	// Durability стойкость к вытеснению, по умолчанию Normal
+	// Durability eviction resistance, default Normal
 	Durability MemoryCacheEntryDurability
 }

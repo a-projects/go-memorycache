@@ -1,11 +1,10 @@
 package memorycache
 
-// MemoryCacheEntryDurability стойкость вытеснения записей из кэша при достижении лимита,
-// устаревшие записи имеют стойкость ниже чем Weak
+// MemoryCacheEntryDurability resistance to evicting entries from cache when limit is reached
 type MemoryCacheEntryDurability int
 
 const (
-	Weak   MemoryCacheEntryDurability = -1 // самая низкая стойкость, вытесняется первым
-	Normal MemoryCacheEntryDurability = 0  // вытесняется если нет записей с приоритетом Weak
-	Strong MemoryCacheEntryDurability = 1  // вытесняется если нет записей с приоритетом Normal
+	Weak   MemoryCacheEntryDurability = -1 // lowest resistance, evicted first
+	Normal MemoryCacheEntryDurability = 0  // evicted if there are no records with priority Weak
+	Strong MemoryCacheEntryDurability = 1  // evicted if there are no records with priority Normal
 )

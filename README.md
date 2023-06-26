@@ -1,18 +1,26 @@
 # go-memorycache
-In-memory cache with expiration and eviction
+[![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
+[![ru](https://img.shields.io/badge/lang-ru-green.svg)](README.ru.md)
 
-## Описание
-Потокобезопасный кэш данных в памяти.
+In-memory cache with expiration and eviction.
 
-Память дорогостоящий ресурс и поэтому кэш снабжен механизмом очистки устаревших записей, а также механизмом вытеснения записей при достижении лимита. Механизм очистки запускается при указании CleanupInterval, а вытеснения при указании LimitEnties. Вытеснение работает по принципу - сначала вытесняются устаревшие записи, а за тем в порядке стойкости.
+## Description
+A thread-safe in-memory cache implementation.
 
-## Установка
+Memory is an expensive resource, so an implementation of clearing obsolete records is provided, as well as an implementation of expelling records when the specified limit is reached.<br>
+Set `CleanupInterval` to enable obsolete records clearing.<br>
+Set `LimitEntries` to enable records expelling when count limit is reached.<br>
+Obsolete records are evicted first, then record are expelled by durability and FIFO method.
+
+Special thanks to ks-troyan.
+
+## Install
 ```
 go get github.com/a-projects/go-memorycache@latest
 ```
 
-## Использование
-```
+## Usage
+```golang
 
 import (
 	"fmt"
@@ -22,42 +30,42 @@ import (
 )
 
 func main() {
-	// создаём экземпляр кэша
+	// create cache instance
 	cache := memorycache.New(memorycache.MemoryCacheOptions{
-		// выполнение очистки записей с периодичностью 15 минут
+		// periodic records clearing, every 15 min
 		CleanupInterval: time.Minute * 15,
-		// лимит записей в кэше, после которого начинает работать вытеснение
+		// cache entries limit, recods
 		LimitEntries: 65_536,
-		// файл для восстановления кэша при перезапуске приложения
-		DataStore: "cache.bin",
+		// file name used to restore data from disc when app is restarted
+		StoreFile: "cache.bin",
 	})
 
-	// пробуем получить значение записи по ключу "foo"
+	// retrieve an item from cache by key "foo"
 	res, ok := cache.Get("foo")
 
-	// если не удаётся получить значение записи
-	// причины:
-	//   - никто не добавлял запись с этим ключом
-	//   - запись была добавлена, но устарела
-	//   - запись была добавлена, но была очищена
-	//   - запись была добавлена, но была вытеснена
+	// if item with given key are not found
+	// reasons:
+	//   - entry was never stored in cache
+	//   - entry was stored, but expired
+	//   - entry was stored, but was removed from cache
+	//   - entry was stored, but was expelled
 	if !ok {
-		// получаем значение из внешних источников
+		// retrieving item from external sources
 		res = "bar"
 
-		// добавляем отсутствующую запись в кэш в виде ключ, значение
+		// add entry to cache as a key value pair
 		cache.Set("foo", res, memorycache.MemoryCacheEntryOptions{
-			// время жизни записи
+			// set expiration timeout
 			Expiration: time.Now().Add(time.Minute * 5),
-			// стойкость к вытеснению
+			// set expellence resistence
 			Durability: memorycache.Normal,
 		})
 	}
 
-	// приводим результат к нужному типу и выводим в консоль
+	// cast result and print to console
 	fmt.Printf(res.(string))
 
-	// останавливаем экземпляр, чтобы данные кэша были сохранены в файл
+	// close cache instance, all chache data will be writen to StoreFile file
 	cache.Close()
 }
 ```

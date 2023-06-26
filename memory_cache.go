@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// MemoryCache кэш
+// MemoryCache cache
 type MemoryCache struct {
 	options MemoryCacheOptions
 	store   map[string]memoryCacheEntry
@@ -18,7 +18,7 @@ type MemoryCache struct {
 	cancel  context.CancelFunc
 }
 
-// Get предоставляет значение записи по ключу
+// Get provide entry value by key
 func (m *MemoryCache) Get(key string) (value interface{}, ok bool) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -32,18 +32,20 @@ func (m *MemoryCache) Get(key string) (value interface{}, ok bool) {
 	return entry.Value, ok
 }
 
-// Set добавляет или изменяет значение записи по ключу
+// Set add entry or update value by key
 func (m *MemoryCache) Set(key string, value interface{}, options MemoryCacheEntryOptions) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	// вытеснение слабой записи из кэша при достижении лимита
+	// удаление слабой записи из кеша при достижении лимита
 	if m.options.LimitEntries != 0 && len(m.store) >= m.options.LimitEntries {
 		if _, ok := m.store[key]; !ok {
 			now := time.Now()
 			var wimpEntry string
+			var wimpEntryExpiration time.Time = time.Now()
 			var wimpEntryDurability MemoryCacheEntryDurability = math.MaxInt
 
+			// алгоритм, исходит из того, что всегда получит запись т.к. сравнивает стойкость с MaxInt
 			for key, entry := range m.store {
 				if now.Sub(entry.Expiration) >= 0 {
 					wimpEntry = key
@@ -52,7 +54,17 @@ func (m *MemoryCache) Set(key string, value interface{}, options MemoryCacheEntr
 
 				if entry.Durability < wimpEntryDurability {
 					wimpEntryDurability = entry.Durability
+					wimpEntryExpiration = entry.Expiration
 					wimpEntry = key
+					continue
+				}
+
+				if entry.Durability == wimpEntryDurability {
+					if wimpEntryExpiration.Sub(entry.Expiration) > 0 {
+						wimpEntryDurability = entry.Durability
+						wimpEntryExpiration = entry.Expiration
+						wimpEntry = key
+					}
 				}
 			}
 
@@ -67,7 +79,7 @@ func (m *MemoryCache) Set(key string, value interface{}, options MemoryCacheEntr
 	}
 }
 
-// Del удаляет запись по ключу
+// Del delete entry by key
 func (m *MemoryCache) Del(key string) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -75,7 +87,7 @@ func (m *MemoryCache) Del(key string) {
 	delete(m.store, key)
 }
 
-// Count предоставляет количество записей в кэше
+// Count provide count entries in cache
 func (m *MemoryCache) Count() (count int) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -83,7 +95,7 @@ func (m *MemoryCache) Count() (count int) {
 	return len(m.store)
 }
 
-// Reset удаляет все записи из кэша
+// Reset remove all entries from cache
 func (m *MemoryCache) Reset() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -91,19 +103,19 @@ func (m *MemoryCache) Reset() {
 	m.store = make(map[string]memoryCacheEntry)
 }
 
-// startCleanup запускает механизм очистки
+// startCleanup start cleaning mechanism
 func (m *MemoryCache) startCleanup() {
 	for {
 		select {
-		case <-m.ctx.Done(): // ожидаем остановку сервиса
+		case <-m.ctx.Done(): // wait for service stop
 			return
-		case <-time.After(m.options.CleanupInterval): // ожидаем таймаут очистки
+		case <-time.After(m.options.CleanupInterval): // wait for cleanup timeout
 			m.сleanup()
 		}
 	}
 }
 
-// сleanup очищает от записей с истёкшим временем жизни
+// сleanup cleaning up expired records
 func (m *MemoryCache) сleanup() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -115,8 +127,7 @@ func (m *MemoryCache) сleanup() {
 	}
 }
 
-// New конструктор
-// также если задан DataStore, то загружает данные кэша из файла
+// New construct and load cache data from file if set StoreFile
 func New(options MemoryCacheOptions) (memorycache *MemoryCache) {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -127,7 +138,7 @@ func New(options MemoryCacheOptions) (memorycache *MemoryCache) {
 		cancel:  cancel,
 	}
 
-	if options.DataStore != "" {
+	if options.StoreFile != "" {
 		memorycache.load()
 	}
 
@@ -138,24 +149,23 @@ func New(options MemoryCacheOptions) (memorycache *MemoryCache) {
 	return memorycache
 }
 
-// Close деструктор
-// также если задан DataStore, то сохраняет данные кэша в файл
+// Close destruct and save cache data in file if set StoreFile
 func (m *MemoryCache) Close() {
 	if m.cancel != nil {
 		m.cancel()
 	}
 
-	if m.options.DataStore != "" {
+	if m.options.StoreFile != "" {
 		m.save()
 	}
 }
 
-// load загружает данные кэша из файла
+// load load cache data from file
 func (m *MemoryCache) load() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	file, err := os.Open(m.options.DataStore)
+	file, err := os.Open(m.options.StoreFile)
 
 	if err == nil {
 		defer file.Close()
@@ -164,12 +174,12 @@ func (m *MemoryCache) load() {
 	}
 }
 
-// save сохраняет данные кэша в файл
+// save save cache data to file
 func (m *MemoryCache) save() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	file, err := os.Create(m.options.DataStore)
+	file, err := os.Create(m.options.StoreFile)
 
 	if err == nil {
 		defer file.Close()

@@ -209,9 +209,38 @@ func Test_limit_3(t *testing.T) {
 	}
 }
 
-func Test_DataStore(t *testing.T) {
+func Test_limit_4(t *testing.T) {
+	cache := New(MemoryCacheOptions{
+		LimitEntries: 2,
+	})
+
+	cache.Set(key1, value1, MemoryCacheEntryOptions{
+		Expiration: time.Now().Add(time.Minute * 2),
+		Durability: Normal,
+	})
+
+	cache.Set(key2, value2, MemoryCacheEntryOptions{
+		Expiration: time.Now().Add(time.Minute * 1),
+		Durability: Normal,
+	})
+
+	cache.Set(key3, value3, MemoryCacheEntryOptions{
+		Expiration: time.Now().Add(time.Minute * 5),
+		Durability: Normal,
+	})
+
+	if _, ok := cache.Get(key1); !ok {
+		t.Fatalf("incorrect result: expected true, got %t", ok)
+	}
+
+	if _, ok := cache.Get(key2); ok {
+		t.Fatalf("incorrect result: expected false, got %t", ok)
+	}
+}
+
+func Test_StoreFile(t *testing.T) {
 	cache1 := New(MemoryCacheOptions{
-		DataStore: "cache.bin",
+		StoreFile: "cache.bin",
 	})
 
 	cache1.Set(key1, value1, MemoryCacheEntryOptions{
@@ -221,7 +250,7 @@ func Test_DataStore(t *testing.T) {
 	cache1.Close()
 
 	cache2 := New(MemoryCacheOptions{
-		DataStore: "cache.bin",
+		StoreFile: "cache.bin",
 	})
 
 	if _, ok := cache2.Get(key1); !ok {
