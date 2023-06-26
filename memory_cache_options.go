@@ -2,12 +2,14 @@ package memorycache
 
 import "time"
 
-// MemoryCacheOptions параметры кэша
+// MemoryCacheOptions cache options
 type MemoryCacheOptions struct {
-	// CleanupInterval интервал очиски кэша от устаревших записей, если 0, то не запускается
+	// CleanupInterval interval for clearing cache from obsolete entries, if 0, then it does not start
 	CleanupInterval time.Duration
-	// LimitEntries лимит записей в кэше, при достижении которого начинается вытеснение, если 0, то неограничено
+
+	// LimitEntries limit of entries in cache, upon reaching which eviction begins, if 0, then unlimited
 	LimitEntries int
-	// DataStore файл для восстановления кэша при перезапуске приложения, если пусто, то не восстанавливает
-	DataStore string
+
+	// StoreFile file to restore cache when application is restarted, if empty, it does not restore
+	StoreFile string
 }

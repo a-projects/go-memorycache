@@ -2,12 +2,12 @@ package memorycache
 
 import "time"
 
-// memoryCacheEntry запись кэша
+// memoryCacheEntry
 type memoryCacheEntry struct {
-	// Value значение
+	// Value entry value
 	Value interface{}
-	// Expiration время жизни
+	// Expirationentry lifetime
 	Expiration time.Time
-	// Durability стойкость к вытеснению
+	// Durability eviction resistance
 	Durability MemoryCacheEntryDurability
 }
