@@ -12,6 +12,8 @@ Set `CleanupInterval` to enable obsolete records clearing.<br>
 Set `LimitEntries` to enable records expelling when count limit is reached.<br>
 Obsolete records are evicted first, then record are expelled by durability and FIFO method.
 
+Special thanks to ks-troyan.
+
 ## Install
 ```
 go get github.com/a-projects/go-memorycache@latest
