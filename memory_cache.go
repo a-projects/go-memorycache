@@ -120,6 +120,10 @@ func (m *MemoryCache) сleanup() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
+	if m.store == nil {
+		return
+	}
+
 	for key, entry := range m.store {
 		if time.Since(entry.Expiration) >= 0 {
 			delete(m.store, key)
@@ -158,6 +162,11 @@ func (m *MemoryCache) Close() {
 	if m.options.StoreFile != "" {
 		m.save()
 	}
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	m.store = nil
 }
 
 // load load cache data from file

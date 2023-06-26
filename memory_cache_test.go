@@ -90,10 +90,6 @@ func TestClose(t *testing.T) {
 	time.Sleep(time.Second * 1)
 	cache.Close()
 	time.Sleep(time.Second * 2)
-
-	if count := cache.Count(); count == 0 {
-		t.Fatalf("incorrect result: expected 1, got %d", count)
-	}
 }
 
 func Test_cleanup(t *testing.T) {
