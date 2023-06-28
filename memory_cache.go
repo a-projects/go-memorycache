@@ -72,10 +72,12 @@ func (m *MemoryCache) Set(key string, value interface{}, options MemoryCacheEntr
 		}
 	}
 
-	m.store[key] = memoryCacheEntry{
-		Value:      value,
-		Expiration: options.Expiration,
-		Durability: options.Durability,
+	if options.Lifetime > 0 {
+		m.store[key] = memoryCacheEntry{
+			Value:      value,
+			Expiration: time.Now().Add(options.Lifetime),
+			Durability: options.Durability,
+		}
 	}
 }
 
@@ -120,18 +122,16 @@ func (m *MemoryCache) сleanup() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	if m.store == nil {
-		return
-	}
-
-	for key, entry := range m.store {
-		if time.Since(entry.Expiration) >= 0 {
-			delete(m.store, key)
+	if m.store != nil {
+		for key, entry := range m.store {
+			if time.Since(entry.Expiration) >= 0 {
+				delete(m.store, key)
+			}
 		}
 	}
 }
 
-// New construct and load cache data from file if set StoreFile
+// New construct and load cache data from file if set FileName
 func New(options MemoryCacheOptions) (memorycache *MemoryCache) {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -142,7 +142,7 @@ func New(options MemoryCacheOptions) (memorycache *MemoryCache) {
 		cancel:  cancel,
 	}
 
-	if options.StoreFile != "" {
+	if options.FileName != "" {
 		memorycache.load()
 	}
 
@@ -153,13 +153,13 @@ func New(options MemoryCacheOptions) (memorycache *MemoryCache) {
 	return memorycache
 }
 
-// Close destruct and save cache data in file if set StoreFile
+// Close destruct and save cache data in file if set FileName
 func (m *MemoryCache) Close() {
 	if m.cancel != nil {
 		m.cancel()
 	}
 
-	if m.options.StoreFile != "" {
+	if m.options.FileName != "" {
 		m.save()
 	}
 
@@ -174,7 +174,7 @@ func (m *MemoryCache) load() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	file, err := os.Open(m.options.StoreFile)
+	file, err := os.Open(m.options.FileName)
 
 	if err == nil {
 		defer file.Close()
@@ -188,7 +188,7 @@ func (m *MemoryCache) save() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	file, err := os.Create(m.options.StoreFile)
+	file, err := os.Create(m.options.FileName)
 
 	if err == nil {
 		defer file.Close()

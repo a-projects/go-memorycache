@@ -30,11 +30,14 @@ func main() {
 	// создаём экземпляр кэша
 	cache := memorycache.New(memorycache.MemoryCacheOptions{
 		// выполнение очистки записей с периодичностью 15 минут
+		// если не задано, то очистка не запускается
 		CleanupInterval: time.Minute * 15,
 		// лимит записей в кэше, после которого начинает работать вытеснение
+		// если не задано, то число записей неограниченно
 		LimitEntries: 65_536,
 		// файл для восстановления кэша при перезапуске приложения
-		StoreFile: "cache.bin",
+		// если не задано, то восстановление не производится
+		FileName: "cache.bin",
 	})
 
 	// пробуем получить значение записи по ключу "foo"
@@ -53,8 +56,10 @@ func main() {
 		// добавляем отсутствующую запись в кэш в виде ключ, значение
 		cache.Set("foo", res, memorycache.MemoryCacheEntryOptions{
 			// время жизни записи
-			Expiration: time.Now().Add(time.Minute * 5),
+			// если на задано, то не добавится
+			Lifetime: time.Minute * 5,
 			// стойкость к вытеснению
+			// если не задано, то Normal
 			Durability: memorycache.Normal,
 		})
 	}
