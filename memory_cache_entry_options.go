@@ -4,8 +4,8 @@ import "time"
 
 // MemoryCacheEntryOptions
 type MemoryCacheEntryOptions struct {
-	// Expiration entry lifetime
-	Expiration time.Time
-	// Durability eviction resistance, default Normal
+	// Lifetime entry lifetime, if not set, then 0
+	Lifetime time.Duration
+	// Durability eviction resistance, if not set, then Normal
 	Durability MemoryCacheEntryDurability
 }

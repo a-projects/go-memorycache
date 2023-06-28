@@ -33,11 +33,14 @@ func main() {
 	// create cache instance
 	cache := memorycache.New(memorycache.MemoryCacheOptions{
 		// periodic records clearing, every 15 min
+		// if not set, then it does not start
 		CleanupInterval: time.Minute * 15,
 		// cache entries limit, recods
+		// if not set, then unlimited
 		LimitEntries: 65_536,
-		// file name used to restore data from disc when app is restarted
-		StoreFile: "cache.bin",
+		// file used to restore data from disc when app is restarted
+		// if not set, it does not restore
+		FileName: "cache.bin",
 	})
 
 	// retrieve an item from cache by key "foo"
@@ -55,9 +58,11 @@ func main() {
 
 		// add entry to cache as a key value pair
 		cache.Set("foo", res, memorycache.MemoryCacheEntryOptions{
-			// set expiration timeout
-			Expiration: time.Now().Add(time.Minute * 5),
+			// set lifetime
+			// if not set, then not stored
+			Lifetime: time.Minute * 5,
 			// set expellence resistence
+			// if not set, then Normal
 			Durability: memorycache.Normal,
 		})
 	}
@@ -65,7 +70,7 @@ func main() {
 	// cast result and print to console
 	fmt.Printf(res.(string))
 
-	// close cache instance, all chache data will be writen to StoreFile file
+	// close cache instance, all chache data will be writen to FileName file
 	cache.Close()
 }
 ```
