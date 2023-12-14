@@ -109,10 +109,10 @@ func (m *MemoryCache) Reset() {
 func (m *MemoryCache) startCleanup() {
 	for {
 		select {
-		case <-m.ctx.Done(): // wait for service stop
+		case <-m.ctx.Done(): // ожидать остановки сервиса
 			return
-		case <-time.After(m.options.CleanupInterval): // wait for cleanup timeout
-			m.сleanup()
+		case <-time.After(m.options.CleanupInterval): // ожидать таймаут очистки
+			m.сleanup() //гонки не будет т.к. cleanup в той же горутине, что и time.After
 		}
 	}
 }
